@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "316879676984",
+    "firebase_url": "https://coffeemanageapp-e1328-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "coffeemanageapp-e1328",
+    "storage_bucket": "coffeemanageapp-e1328.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316879676984:android:76c01f3606e529a4b5e8cd",
+        "android_client_info": {
+          "package_name": "com.example.app_coffee_manage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuZOryGtg5KghOxrRHd92IjCI7Phg3uhI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
