@@ -96,7 +96,6 @@ class _MenuDetailWidgetState extends State<MenuDetailWidget> {
     });
     userRef.child("loai").onValue.listen((event) {
       dropdownValue = event.snapshot.value.toString();
-    
     });
     userRef.child("photoUrl").onValue.listen((event) {
         photoLink = event.snapshot.value.toString(); 
@@ -105,7 +104,8 @@ class _MenuDetailWidgetState extends State<MenuDetailWidget> {
           
   }
   void deleteData() {
-    FirebaseDatabase.instance.reference().child('menu/${id}').remove().then((value) => Navigator.pushNamed(context, '/menu'));
+    Navigator.pushNamed(context, '/menu');
+    FirebaseDatabase.instance.reference().child('menu/${id}').remove();
   }
   void updateData() async {
     if (_model.txtTenMonController.text == "" ||
@@ -192,10 +192,14 @@ class _MenuDetailWidgetState extends State<MenuDetailWidget> {
         resizeToAvoidBottomInset: false,
         key: scaffoldKey,
         backgroundColor: Colors.white,
+        
         appBar: AppBar(
           backgroundColor: Colors.white,
-          iconTheme:
-              IconThemeData(color: FlutterFlowTheme.of(context).primaryText),
+          
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pushNamed(context, '/menu'),
+          ),
           automaticallyImplyLeading: true,
           title: Text(
             'Thông Tin Chi Tiết',
@@ -234,7 +238,7 @@ class _MenuDetailWidgetState extends State<MenuDetailWidget> {
                           ),
                           child: _pic = photoLink != null
                               ? Image.network(
-                                  photoLink.toString(),
+                                  photoLink.toString() != "null" ? photoLink.toString() : "https://www.shutterstock.com/image-vector/dotted-spiral-vortex-royaltyfree-images-600w-2227567913.jpg",
                                   fit: BoxFit.cover,
                                 )
                               : Image.asset('images/camera.png'), 
@@ -431,30 +435,58 @@ class _MenuDetailWidgetState extends State<MenuDetailWidget> {
                               fontWeight: FontWeight.w600,
                             ),
                       ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-                        child: Card(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownMenu<String>(
-                            initialSelection: dropdownValue.toString(),
-                            onSelected: (String? value) {
-                              // This is called when the user selects an item.
-                              setState(() {
-                                dropdownValue = value!;
-                              });
-                            },
-                            dropdownMenuEntries: list.map<DropdownMenuEntry<String>>((String value) {
-                              return DropdownMenuEntry<String>(value: value, label: value);
-                            }).toList(),
-                          ),
-                        ),
-                      ),
+                      Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(
+          color: FlutterFlowTheme.of(context).alternate,
+          width: 2.0,
+        ),
+      ),
+                  child: StreamBuilder(
+                stream: FirebaseDatabase.instance.reference().child('thongtinquan/loai').onValue.asBroadcastStream(),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (!snapshot.hasData) {
+                    return CircularProgressIndicator();
+                  }
+                  Map<dynamic, dynamic> values = snapshot.data.snapshot.value;
+
+                  // Extract data and create a list of dropdown items
+                  List<DropdownMenuItem<String>> dropdownItems = [];
+
+                  if (values != null) {
+                    values.forEach((key, value) {
+                      String itemName = value['ten']; // Replace with your field name
+                      dropdownItems.add(DropdownMenuItem<String>(
+                        value: itemName,
+                        child: Text(itemName, style: TextStyle(
+          color: Colors.black,
+          fontSize: 14.0,
+        ),
+),
+                      ));
+                    });
+                  }
+
+                  // Display the dropdown with the populated items
+                  return DropdownButton<String>(
+                    items: dropdownItems,
+                    onChanged: (String? newValue) {
+                      // Handle the selected value
+                      setState(() {
+                            dropdownValue = newValue ?? '';
+                          });
+                    },
+                    hint: Text(dropdownValue.toString() == "" ? "Chọn Menu" : dropdownValue.toString(), style: TextStyle(
+            color: Colors.black,
+            fontSize: 14.0,
+          ),),
+                  );
+                },
+              ),
+                ),
                     ],
                   ),
                 ),

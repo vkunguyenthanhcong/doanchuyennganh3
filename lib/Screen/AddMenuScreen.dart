@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '/flutter_flow/flutter_flow_icon_button.dart';
@@ -31,7 +32,7 @@ class _AddMenuWidgetState extends State<AddMenuWidget> {
   List<String> list = <String>['Coffee', 'Trà', 'Trà Sữa', 'Nước Ngọt'];
   String dropdownValue = "";
   String? tenmon;
-  String? giamon;
+  int? giamon;
   String? linkmon;
   String? id;
   String? fileUrl;
@@ -76,8 +77,25 @@ class _AddMenuWidgetState extends State<AddMenuWidget> {
               .replaceAll(RegExp(r'[đ]'), 'd');
 }
   Future<void> uploadData() async {
+    if (fileUrl == "" || fileUrl == "null" || fileUrl == null){
+      Fluttertoast.showToast(
+            msg: "Vui lòng chọn hình ảnh",
+            toastLength: Toast.LENGTH_SHORT,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            );
+    }else{
+      showDialog(
+          context: context,
+          builder: (context) {
+            return Center(child: CircularProgressIndicator());
+          });
+      tenmon = _model.txtTenMonController.text.toString();
+    giamon = int.parse( _model.txtGiaController.text.toString());
     String? photolink;
-    id = removeDiacritics(_model.txtTenMonController.text.toString().replaceAll(' ', ''));
+    id = removeDiacritics(tenmon.toString().replaceAll(' ', '').toLowerCase());
     DatabaseReference ref = FirebaseDatabase.instance.ref("menu/${id}");
     File file = File(fileUrl.toString());
     String fileName = id.toString(); // Use a unique name for the file
@@ -92,8 +110,8 @@ class _AddMenuWidgetState extends State<AddMenuWidget> {
     
     photolink = await firebase_storage.FirebaseStorage.instance.ref('menu/${fileName}').getDownloadURL();
     await ref.set({
-      "ten": _model.txtTenMonController.text.toString(),
-      "gia":  int.parse( _model.txtGiaController.text.toString()),
+      "ten": tenmon.toString(),
+      "gia":  giamon,
       "loai" : dropdownValue.toString(),
       "photoUrl" : photolink.toString(),
       "id" : id.toString()
@@ -101,6 +119,7 @@ class _AddMenuWidgetState extends State<AddMenuWidget> {
   } on firebase_storage.FirebaseException catch (e) {
     print('Error uploading image to Firebase Storage: $e');
   }
+    }
     
   }
   @override
@@ -146,7 +165,7 @@ class _AddMenuWidgetState extends State<AddMenuWidget> {
             padding: EdgeInsetsDirectional.fromSTEB(20, 0, 20, 0),
             child: Column(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Align(
                   alignment: AlignmentDirectional(0.00, 0.00),

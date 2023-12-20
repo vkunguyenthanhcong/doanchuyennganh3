@@ -4,4 +4,11 @@ class Menu {
   String photoUrl;
  
   Menu(this.ten,this.gia, this.photoUrl);
+  factory Menu.fromMap(Map<dynamic, dynamic> data) {
+    return Menu(
+      data['ten'],
+      data['gia'],
+      data['photoUrl'],
+    );
+  }
 }

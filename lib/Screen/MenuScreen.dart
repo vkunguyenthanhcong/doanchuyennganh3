@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Global/custom_dialog.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -22,11 +24,20 @@ class MenuWidget extends StatefulWidget {
   _MenuWidgetState createState() => _MenuWidgetState();
 }
 
+class Loai {
+  String ten;
+  String id;
+
+  Loai(this.id, this.ten);
+}
+
 class _MenuWidgetState extends State<MenuWidget> {
   late MenuModel _model;
   int _currentIndex = 0;
+  List<Loai> loais = [];
   late SharedPreferences menudata;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -36,7 +47,28 @@ class _MenuWidgetState extends State<MenuWidget> {
     _model.txtSearchController ??= TextEditingController();
     _model.txtSearchFocusNode ??= FocusNode();
 
+    _model.txtTenLoaiController ??= TextEditingController();
+    _model.txtTenLoaiFocusNode ??= FocusNode();
+
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
+  }
+
+  void _xoaLoai(String id) {
+    FirebaseDatabase.instance
+        .ref('thongtinquan/loai/${id.toString()}')
+        .remove();
+  }
+
+  String removeDiacritics(String input) {
+    return input
+        .replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a')
+        .replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e')
+        .replaceAll(RegExp(r'[ìíịỉĩ]'), 'i')
+        .replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o')
+        .replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u')
+        .replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y')
+        .replaceAll(RegExp(r'[đ]'), 'd')
+        .replaceAll(' ', '');
   }
 
   @override
@@ -67,10 +99,24 @@ class _MenuWidgetState extends State<MenuWidget> {
         resizeToAvoidBottomInset: false,
         key: scaffoldKey,
         backgroundColor: Colors.white,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/addmenu');
+          },
+          backgroundColor: FlutterFlowTheme.of(context).primary,
+          elevation: 8,
+          child: Icon(
+            Icons.add,
+            color: FlutterFlowTheme.of(context).info,
+            size: 24,
+          ),
+        ),
         appBar: AppBar(
           backgroundColor: Colors.white,
-          iconTheme:
-              IconThemeData(color: FlutterFlowTheme.of(context).primaryText),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pushNamed(context, '/home'),
+          ),
           automaticallyImplyLeading: true,
           title: Text(
             'Menu',
@@ -157,8 +203,260 @@ class _MenuWidgetState extends State<MenuWidget> {
                         color: FlutterFlowTheme.of(context).primaryText,
                         size: 24,
                       ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/addmenu');
+                      onPressed: () async {
+                        await showDialog<void>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                                  content: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: <Widget>[
+                                      Positioned(
+                                        right: -40,
+                                        top: -40,
+                                        child: InkResponse(
+                                          onTap: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const CircleAvatar(
+                                            backgroundColor: Colors.red,
+                                            child: Icon(Icons.close),
+                                          ),
+                                        ),
+                                      ),
+                                      Form(
+                                        key: _formKey,
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: EdgeInsetsDirectional
+                                                  .fromSTEB(0, 20, 0, 5),
+                                              child: Text(
+                                                'Loại:',
+                                                style:
+                                                    FlutterFlowTheme.of(context)
+                                                        .bodyMedium
+                                                        .override(
+                                                          fontFamily:
+                                                              'Readex Pro',
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                              ),
+                                            ),
+                                            Align(
+                                              alignment: AlignmentDirectional(
+                                                  -1.00, -1.00),
+                                              child: Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(0, 10, 0, 0),
+                                                child: TextFormField(
+                                                  controller: _model
+                                                      .txtTenLoaiController,
+                                                  focusNode: _model
+                                                      .txtTenLoaiFocusNode,
+                                                  obscureText: false,
+                                                  decoration: InputDecoration(
+                                                    hintStyle:
+                                                        FlutterFlowTheme.of(
+                                                                context)
+                                                            .labelMedium,
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .alternate,
+                                                        width: 2,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .primary,
+                                                        width: 2,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    errorBorder:
+                                                        OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .error,
+                                                        width: 2,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    focusedErrorBorder:
+                                                        OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            FlutterFlowTheme.of(
+                                                                    context)
+                                                                .error,
+                                                        width: 2,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                  ),
+                                                  style: FlutterFlowTheme.of(
+                                                          context)
+                                                      .bodyMedium,
+                                                ),
+                                              ),
+                                            ),
+                                            StreamBuilder(
+                                              stream: FirebaseDatabase.instance
+                                                  .reference()
+                                                  .child("thongtinquan/loai/")
+                                                  .onValue
+                                                  .asBroadcastStream(),
+                                              builder: (BuildContext context,
+                                                  AsyncSnapshot snapshot) {
+                                                if (snapshot.hasData &&
+                                                    snapshot.data!.snapshot
+                                                            .value !=
+                                                        null) {
+                                                  Map map = snapshot
+                                                      .data.snapshot.value;
+                                                  loais.clear();
+                                                  List<Widget> widgets = [];
+                                                  map.forEach((dynamic, v) {
+                                                    loais.add(new Loai(
+                                                        v["id"], v["ten"]));
+                                                    widgets.add(Padding(
+                                                      padding:
+                                                          EdgeInsetsDirectional
+                                                              .fromSTEB(20, 20,
+                                                                  20, 0),
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.max,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            v["ten"].toString(),
+                                                            style: FlutterFlowTheme
+                                                                    .of(context)
+                                                                .bodyMedium,
+                                                          ),
+                                                          Align(
+                                                              alignment:
+                                                                  AlignmentDirectional(
+                                                                      -1, -1),
+                                                              child: InkWell(
+                                                                onTap: () =>
+                                                                    showDialog(
+                                                                        context:
+                                                                            context,
+                                                                        builder:
+                                                                            (BuildContext
+                                                                                context) {
+                                                                          return CustomConfirmDialog(
+                                                                              title: "Xoá",
+                                                                              content: "Bạn có chắc chắn muốn xoá dữ liệu này?",
+                                                                              onConfirm: () {
+                                                                                Navigator.pop(context);
+                                                                                _xoaLoai(v["id"].toString());
+                                                                              },
+                                                                              onCancel: () {
+                                                                                Navigator.pop(context);
+                                                                              });
+                                                                        }),
+                                                                child: Icon(
+                                                                  Icons
+                                                                      .delete_forever,
+                                                                  color: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .primaryText,
+                                                                  size: 24,
+                                                                ),
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ));
+                                                  });
+                                                  return Column(
+                                                    children: widgets,
+                                                  );
+                                                } else {
+                                                  return CircularProgressIndicator();
+                                                }
+                                              },
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8),
+                                              child: ElevatedButton(
+                                                  child: const Text('Thêm'),
+                                                  onPressed: () async {
+                                                    if (_model
+                                                        .txtTenLoaiController
+                                                        .text
+                                                        .isEmpty) {
+                                                      Fluttertoast.showToast(
+                                                        msg:
+                                                            "Vui lòng điền đầy đủ thông tin.",
+                                                        toastLength:
+                                                            Toast.LENGTH_SHORT,
+                                                        timeInSecForIosWeb: 1,
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                        textColor: Colors.white,
+                                                        fontSize: 16.0,
+                                                      );
+                                                    } else {
+                                                      FocusManager
+                                                          .instance.primaryFocus
+                                                          ?.unfocus();
+                                                      DatabaseReference ref =
+                                                          FirebaseDatabase
+                                                              .instance
+                                                              .ref(
+                                                                  "thongtinquan/loai/${removeDiacritics(_model.txtTenLoaiController.text.toString().toLowerCase()).toString()}");
+                                                      await ref.set({
+                                                        "id": removeDiacritics(
+                                                            _model
+                                                                .txtTenLoaiController
+                                                                .text
+                                                                .toString()
+                                                                .toLowerCase()),
+                                                        "ten": _model
+                                                            .txtTenLoaiController
+                                                            .text
+                                                            .toString(),
+                                                      });
+                                                      _model
+                                                          .txtTenLoaiController
+                                                          .text = "";
+                                                    }
+                                                  }),
+                                            )
+                                          ],
+                                        ),
+                                        )
+                                      ),
+                                    ],
+                                  ),
+                                ));
                       },
                     ),
                   ),
@@ -167,7 +465,10 @@ class _MenuWidgetState extends State<MenuWidget> {
               Expanded(
                   child: FirebaseAnimatedList(
                       query: ref,
-                      defaultChild: Center(child: Container(child: CircularProgressIndicator(),)),
+                      defaultChild: Center(
+                          child: Container(
+                        child: CircularProgressIndicator(),
+                      )),
                       itemBuilder: ((context, snapshot, animation, index) {
                         final tenmon = snapshot.child('ten').value.toString();
                         if (_model.txtSearchController.text.isEmpty) {
@@ -198,7 +499,10 @@ class _MenuWidgetState extends State<MenuWidget> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
-                                          snapshot.child('photoUrl').value.toString(),
+                                          snapshot
+                                              .child('photoUrl')
+                                              .value
+                                              .toString(),
                                           width: 100,
                                           height: 100,
                                           fit: BoxFit.cover,
@@ -214,7 +518,10 @@ class _MenuWidgetState extends State<MenuWidget> {
                                           alignment: AlignmentDirectional(
                                               -1.00, -1.00),
                                           child: Text(
-                                            snapshot.child('ten').value.toString(),
+                                            snapshot
+                                                .child('ten')
+                                                .value
+                                                .toString(),
                                             style: FlutterFlowTheme.of(context)
                                                 .bodyLarge
                                                 .override(
@@ -237,7 +544,13 @@ class _MenuWidgetState extends State<MenuWidget> {
                                                   ),
                                             ),
                                             Text(
-                                               ((int.parse(snapshot.child('gia').value.toString()) / 1000).toStringAsFixed(3).replaceAll('.', ',')),
+                                              ((int.parse(snapshot
+                                                          .child('gia')
+                                                          .value
+                                                          .toString()) /
+                                                      1000)
+                                                  .toStringAsFixed(3)
+                                                  .replaceAll('.', ',')),
                                               style: FlutterFlowTheme.of(
                                                       context)
                                                   .bodyMedium
@@ -278,7 +591,10 @@ class _MenuWidgetState extends State<MenuWidget> {
                                                   ),
                                             ),
                                             Text(
-                                              snapshot.child('loai').value.toString(),
+                                              snapshot
+                                                  .child('loai')
+                                                  .value
+                                                  .toString(),
                                               style: FlutterFlowTheme.of(
                                                       context)
                                                   .bodyMedium
@@ -291,31 +607,13 @@ class _MenuWidgetState extends State<MenuWidget> {
                                         ),
                                       ],
                                     ),
-                                    Expanded(
-                                      child: Align(
-                                        alignment:
-                                            AlignmentDirectional(1.00, -1.00),
-                                        child: Padding(
-                                          padding:
-                                              EdgeInsetsDirectional.fromSTEB(
-                                                  0, 0, 20, 0),
-                                          child: Icon(
-                                            Icons.remove_red_eye,
-                                            color: FlutterFlowTheme.of(context)
-                                                .primaryText,
-                                            size: 24,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
                             ),
                           );
-                        } else if (tenmon
-                            .toLowerCase()
-                            .contains(_model.txtSearchController.text.toLowerCase())) {
+                        } else if (tenmon.toLowerCase().contains(
+                            _model.txtSearchController.text.toLowerCase())) {
                           return InkWell(
                             onTap: () async {
                               menudata = await SharedPreferences.getInstance();
@@ -343,7 +641,10 @@ class _MenuWidgetState extends State<MenuWidget> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
-                                          snapshot.child('photoUrl').value.toString(),
+                                          snapshot
+                                              .child('photoUrl')
+                                              .value
+                                              .toString(),
                                           width: 100,
                                           height: 100,
                                           fit: BoxFit.cover,
@@ -359,7 +660,10 @@ class _MenuWidgetState extends State<MenuWidget> {
                                           alignment: AlignmentDirectional(
                                               -1.00, -1.00),
                                           child: Text(
-                                            snapshot.child('ten').value.toString(),
+                                            snapshot
+                                                .child('ten')
+                                                .value
+                                                .toString(),
                                             style: FlutterFlowTheme.of(context)
                                                 .bodyLarge
                                                 .override(
@@ -382,7 +686,13 @@ class _MenuWidgetState extends State<MenuWidget> {
                                                   ),
                                             ),
                                             Text(
-                                              ((int.parse(snapshot.child('gia').value.toString()) / 1000).toStringAsFixed(3).replaceAll('.', ',')),
+                                              ((int.parse(snapshot
+                                                          .child('gia')
+                                                          .value
+                                                          .toString()) /
+                                                      1000)
+                                                  .toStringAsFixed(3)
+                                                  .replaceAll('.', ',')),
                                               style: FlutterFlowTheme.of(
                                                       context)
                                                   .bodyMedium
@@ -423,7 +733,10 @@ class _MenuWidgetState extends State<MenuWidget> {
                                                   ),
                                             ),
                                             Text(
-                                              snapshot.child('loai').value.toString(),
+                                              snapshot
+                                                  .child('loai')
+                                                  .value
+                                                  .toString(),
                                               style: FlutterFlowTheme.of(
                                                       context)
                                                   .bodyMedium

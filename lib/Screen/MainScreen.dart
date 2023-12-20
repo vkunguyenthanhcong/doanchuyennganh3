@@ -25,14 +25,18 @@ class MainWidget extends StatefulWidget {
 
 class _MainWidgetState extends State<MainWidget> {
   late MainModel _model;
-
+  User? user = FirebaseAuth.instance.currentUser;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   late SharedPreferences logindata;
   String? fullName;
   int _currentIndex = 0;
-  
+  String? _roll;
+
   @override
   void initState() {
+    setState(() {
+      initial();
+    });
     super.initState();
     _model = createModel(context, () => MainModel());
 
@@ -40,10 +44,6 @@ class _MainWidgetState extends State<MainWidget> {
     _model.txtFindFocusNode ??= FocusNode();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
-    
-    setState(() {
-      initial();
-    });
   }
 
   @override
@@ -52,11 +52,68 @@ class _MainWidgetState extends State<MainWidget> {
 
     super.dispose();
   }
+  void checkOrder() async {
+    DatabaseReference userRef =
+        FirebaseDatabase.instance.reference().child('users/${user!.uid}');
+    userRef.child("quyen").onValue.listen((event) {
+      if (event.snapshot.value.toString().contains("Order")){
+        Navigator.pushNamed(context, '/order');
+      }else{
+Fluttertoast.showToast(
+        msg: "Không đủ quyền truy cập",  
+        toastLength: Toast.LENGTH_SHORT,
+        timeInSecForIosWeb: 3,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      }
+    });
+        
+  }
+  void checkNhanSu() async {
+    DatabaseReference userRef =
+        FirebaseDatabase.instance.reference().child('users/${user!.uid}');
+    userRef.child("quyen").onValue.listen((event) {
+      if (event.snapshot.value.toString().contains("Nhân Sự")){
+        Navigator.pushNamed(context, '/nhansu');
+      }else{
+        Fluttertoast.showToast(
+        msg: "Không đủ quyền truy cập",  
+        toastLength: Toast.LENGTH_SHORT,
+        timeInSecForIosWeb: 3,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      }
+    }); 
+  }
+  void checkMenu() async {
+    DatabaseReference userRef =
+        FirebaseDatabase.instance.reference().child('users/${user!.uid}');
+    userRef.child("quyen").onValue.listen((event) {
+      if (event.snapshot.value.toString().contains("Menu")){
+        Navigator.pushNamed(context, '/menu');
+      }else{
+        Fluttertoast.showToast(
+        msg: "Không đủ quyền truy cập",  
+        toastLength: Toast.LENGTH_SHORT,
+        timeInSecForIosWeb: 3,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      }
+    }); 
+  }
   void initial() async {
     logindata = await SharedPreferences.getInstance();
-    User? user = FirebaseAuth.instance.currentUser;
+    _roll = logindata.getString('roll');
+    
     fullName = user!.displayName.toString();
   }
+
   @override
   Widget build(BuildContext context) {
     if (isiOS) {
@@ -76,7 +133,7 @@ class _MainWidgetState extends State<MainWidget> {
         resizeToAvoidBottomInset: false,
         key: scaffoldKey,
         backgroundColor: Colors.white,
-        body:SafeArea(
+        body: SafeArea(
           top: true,
           child: Column(
             mainAxisSize: MainAxisSize.max,
@@ -254,106 +311,133 @@ class _MainWidgetState extends State<MainWidget> {
                               Navigator.pushNamed(context, '/thongtincanhan');
                             },
                             child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFE6F7FF),
-                                  borderRadius: BorderRadius.circular(20),
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFE6F7FF),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Icon(
+                                    Icons.person_2,
+                                    color: Color(0xFF66CCFF),
+                                    size: 40,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.person_2,
-                                  color: Color(0xFF66CCFF),
-                                  size: 40,
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0, 10, 0, 0),
+                                  child: Text(
+                                    'Thông Tin',
+                                    textAlign: TextAlign.center,
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                                child: Text(
-                                  'Thông Tin',
-                                  textAlign: TextAlign.center,
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Readex Pro',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
                           ),
                           InkWell(
-                            onTap: (){
-                              Navigator.pushNamed(context, '/thongtinquan');
+                            onTap: () {
+                              if (_roll == "User") {
+                                Fluttertoast.showToast(
+                                  msg: "Bạn không phải nhân viên quán",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  timeInSecForIosWeb: 3,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 16.0,
+                                );
+                              } else {
+
+                                checkOrder();
+                              }
                             },
                             child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFE6FFF2),
-                                  borderRadius: BorderRadius.circular(20),
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFFFFE6),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Icon(
+                                    Icons.add_circle,
+                                    color: Color(0xFFE6E600),
+                                    size: 40,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.book,
-                                  color: Color(0xFF1AFF8C),
-                                  size: 40,
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0, 10, 0, 0),
+                                  child: Text(
+                                    'Order',
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                                child: Text(
-                                  'Thông Tin Quán',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Readex Pro',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          ),
-                          Column(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFFFE6EE),
-                                  borderRadius: BorderRadius.circular(20),
+                          InkWell(
+                            onTap: () {
+                              if (_roll == "User") {
+                                Fluttertoast.showToast(
+                                  msg: "Bạn không phải nhân viên quán",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  timeInSecForIosWeb: 3,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 16.0,
+                                );
+                              } else {
+                                  checkNhanSu();
+                              }
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFFE6EE),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Icon(
+                                    Icons.settings_outlined,
+                                    color: Color(0xFFFF6699),
+                                    size: 40,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.settings_outlined,
-                                  color: Color(0xFFFF6699),
-                                  size: 40,
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0, 10, 0, 0),
+                                  child: Text(
+                                    'Nhân Sự',
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                                child: Text(
-                                  'Nhân Sự',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Readex Pro',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -398,74 +482,54 @@ class _MainWidgetState extends State<MainWidget> {
                             ],
                           ),
                           InkWell(
-                            onTap: (){Navigator.pushNamed(context, '/menu');},
+                            onTap: () {
+                              if (_roll == "User") {
+                                Fluttertoast.showToast(
+                                  msg: "Bạn không phải nhân viên quán",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  timeInSecForIosWeb: 3,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 16.0,
+                                );
+                              } else {
+                                checkMenu();
+                              }
+                              
+                            },
                             child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFFFE6F0),
-                                  borderRadius: BorderRadius.circular(20),
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFFE6F0),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Icon(
+                                    Icons.menu_book,
+                                    color: Color(0xFFFF0066),
+                                    size: 40,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.menu_book,
-                                  color: Color(0xFFFF0066),
-                                  size: 40,
+                                Padding(
+                                  padding: EdgeInsetsDirectional.fromSTEB(
+                                      0, 10, 0, 0),
+                                  child: Text(
+                                    'Menu',
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                                child: Text(
-                                  'Menu',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Readex Pro',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          ),
-                          InkWell(
-                            onTap: () {Navigator.pushNamed(context, '/order');},
-                            child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFFFFFE6),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Icon(
-                                  Icons.add_circle,
-                                  color: Color(0xFFE6E600),
-                                  size: 40,
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                                child: Text(
-                                  'Order',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Readex Pro',
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          )
                         ],
                       ),
                     ),
@@ -476,15 +540,14 @@ class _MainWidgetState extends State<MainWidget> {
           ),
         ),
         bottomNavigationBar: BottomNavigationWidget(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-            navigateToSelectedPage(context, index);
-          });
-          
-        },
-      ),
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+              navigateToSelectedPage(context, index);
+            });
+          },
+        ),
       ),
     );
   }

@@ -121,7 +121,8 @@ class _SignUpWidgetState extends State<SignUpWidget> {
           "uid": user?.uid,
           "phoneNumber": "0000-000-000",
           "sex" : "Nam",
-          "calamviec": "No"
+          "calamviec": "No",
+          "quyen" : "Thông Tin"
         });
         Fluttertoast.showToast(
           msg: "Đăng Ký Thành Công",

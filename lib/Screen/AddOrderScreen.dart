@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:ui';
 import 'package:app_coffee_manage/Model/Menu.dart';
 import 'package:app_coffee_manage/Model/Order.dart';
@@ -60,16 +61,19 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
 
     super.dispose();
   }
+
   final auth = FirebaseAuth.instance;
   final _refs = FirebaseDatabase.instance.ref('thongtinquan/loai');
 
   void addMenu(String id, int gia, String ten) async {
-    DatabaseReference ref = FirebaseDatabase.instance
-        .ref("ban/${removeDiacritics(_ban.toLowerCase())}/order/$id/");
+    DateTime now = DateTime.now();
+    String formattedDateTime = DateFormat('yyyy-MM-dd-HH:mm:ssss').format(now);
+    DatabaseReference ref = FirebaseDatabase.instance.ref(
+        "ban/${removeDiacritics(_ban.toLowerCase())}/order/${id + formattedDateTime}/");
     await ref.set({
       "gia": gia,
       "ten": ten,
-      "id": id,
+      "id": id + formattedDateTime,
       "soluong": 1,
     });
     DatabaseReference _ref = FirebaseDatabase.instance
@@ -80,7 +84,6 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
       "trangthai": "Busy"
     });
   }
-
   String removeDiacritics(String input) {
     return input
         .replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a')
@@ -109,7 +112,7 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
         ),
       );
     }
-
+    
     return StreamBuilder(
         stream: _userDataController.stream,
         builder: (context, snapshot) {
@@ -307,88 +310,35 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                     ),
                                   ),
                                   Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        20, 0, 0, 0),
-                                    child: InkWell(
-                                      onTap: () {},
-                                      child: Container(
-                                      width: MediaQuery.sizeOf(context).width *
-                                          0.7,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: FlutterFlowTheme.of(context)
-                                            .primary,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    10, 0, 0, 0),
-                                            child: Text(
-                                              _soLuong.toString(),
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        fontFamily:
-                                                            'Readex Pro',
-                                                        color: Colors.white,
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.normal,
-                                                      ),
-                                            ),
+                                      padding: EdgeInsetsDirectional.fromSTEB(
+                                          20, 0, 0, 0),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          await showDialog(
+                                              context: context,
+                                              builder: (_) => LoadMenu());
+                                        },
+                                        child: Container(
+                                          width:
+                                              MediaQuery.sizeOf(context).width *
+                                                  0.7,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            color: FlutterFlowTheme.of(context)
+                                                .primary,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    10, 0, 0, 0),
-                                            child: Text(
-                                              '|',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        fontFamily:
-                                                            'Readex Pro',
-                                                        color: Colors.white,
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.normal,
-                                                      ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                EdgeInsetsDirectional.fromSTEB(
-                                                    10, 0, 0, 0),
-                                            child: Text(
-                                              'Tổng tiền : ',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        fontFamily:
-                                                            'Readex Pro',
-                                                        color: Colors.white,
-                                                        fontSize: 16,
-                                                      ),
-                                            ),
-                                          ),
-                                          Flexible(
-                                            child: Align(
-                                              alignment: AlignmentDirectional(
-                                                  1.00, 0.00),
-                                              child: Padding(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.max,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Padding(
                                                 padding: EdgeInsetsDirectional
                                                     .fromSTEB(10, 0, 0, 0),
                                                 child: Text(
-                                                  _tongTien.toString(),
+                                                  _soLuong.toString(),
                                                   style: FlutterFlowTheme.of(
                                                           context)
                                                       .bodyMedium
@@ -397,21 +347,34 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                             'Readex Pro',
                                                         color: Colors.white,
                                                         fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.normal,
                                                       ),
                                                 ),
                                               ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Align(
-                                              alignment: AlignmentDirectional(
-                                                  1.00, 0.00),
-                                              child: Padding(
+                                              Padding(
                                                 padding: EdgeInsetsDirectional
-                                                    .fromSTEB(5, 0, 10, 0),
+                                                    .fromSTEB(10, 0, 0, 0),
                                                 child: Text(
-                                                  'đ',
-                                                  textAlign: TextAlign.center,
+                                                  '|',
+                                                  style: FlutterFlowTheme.of(
+                                                          context)
+                                                      .bodyMedium
+                                                      .override(
+                                                        fontFamily:
+                                                            'Readex Pro',
+                                                        color: Colors.white,
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                      ),
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(10, 0, 0, 0),
+                                                child: Text(
+                                                  'Tổng tiền : ',
                                                   style: FlutterFlowTheme.of(
                                                           context)
                                                       .bodyMedium
@@ -423,13 +386,62 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                       ),
                                                 ),
                                               ),
-                                            ),
+                                              Flexible(
+                                                child: Align(
+                                                  alignment:
+                                                      AlignmentDirectional(
+                                                          1.00, 0.00),
+                                                  child: Padding(
+                                                    padding:
+                                                        EdgeInsetsDirectional
+                                                            .fromSTEB(
+                                                                10, 0, 0, 0),
+                                                    child: Text(
+                                                      _tongTien.toString(),
+                                                      style: FlutterFlowTheme
+                                                              .of(context)
+                                                          .bodyMedium
+                                                          .override(
+                                                            fontFamily:
+                                                                'Readex Pro',
+                                                            color: Colors.white,
+                                                            fontSize: 16,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Align(
+                                                  alignment:
+                                                      AlignmentDirectional(
+                                                          1.00, 0.00),
+                                                  child: Padding(
+                                                    padding:
+                                                        EdgeInsetsDirectional
+                                                            .fromSTEB(
+                                                                5, 0, 10, 0),
+                                                    child: Text(
+                                                      'đ',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: FlutterFlowTheme
+                                                              .of(context)
+                                                          .bodyMedium
+                                                          .override(
+                                                            fontFamily:
+                                                                'Readex Pro',
+                                                            color: Colors.white,
+                                                            fontSize: 16,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    )
-                                  ),
+                                        ),
+                                      )),
                                 ],
                               ),
                               SizedBox(
@@ -490,13 +502,15 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                         child: SizedBox(
                                           height: 200.0,
                                           child: new GridView.builder(
+                                            clipBehavior: Clip.none,
+                                            physics: ScrollPhysics(),
                                             padding: EdgeInsets.zero,
                                             gridDelegate:
                                                 SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 3,
-                                              crossAxisSpacing: 10,
-                                              mainAxisSpacing: 10,
-                                              childAspectRatio: 1,
+                                              crossAxisCount: 5,
+                                              crossAxisSpacing: 1.0,
+                                              mainAxisSpacing: 1.0,
+                                            
                                             ),
                                             itemCount: menus.length,
                                             itemBuilder: (BuildContext context,
@@ -619,8 +633,22 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                   .contains(_model
                                                       .txtFindController.text
                                                       .toLowerCase())) {
+                                                
                                                 return InkWell(
-                                                    onTap: () {},
+                                                    onTap: () {
+                                                      addMenu(
+                                                          removeDiacritics(menus[
+                                                                  index]
+                                                              .ten
+                                                              .toString()
+                                                              .toLowerCase()),
+                                                          int.parse(menus[index]
+                                                              .gia
+                                                              .toString()),
+                                                          menus[index]
+                                                              .ten
+                                                              .toString());
+                                                    },
                                                     child: Column(
                                                       mainAxisSize:
                                                           MainAxisSize.max,
@@ -715,8 +743,13 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                       ],
                                                     ));
                                               } else {
-                                                return Center(
-                                                  child: Container(),
+                                                return Visibility(
+                                                  visible: false,
+                                                  child: SizedBox(
+                                                    height: 500.0,
+
+                                                  ),
+
                                                 );
                                               }
                                             },
@@ -750,5 +783,32 @@ String formatNumber(int number) {
     return '${(number / 1000).toStringAsFixed(0)}k';
   } else {
     return number.toString();
+  }
+}
+
+class LoadMenu extends StatelessWidget {
+  late SharedPreferences bandata;
+  String? _ban;
+  String removeDiacritics(String input) {
+    return input
+        .replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a')
+        .replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e')
+        .replaceAll(RegExp(r'[ìíịỉĩ]'), 'i')
+        .replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o')
+        .replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u')
+        .replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y')
+        .replaceAll(RegExp(r'[đ]'), 'd')
+        .replaceAll(' ', '');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FirebaseAnimatedList(
+        query: FirebaseDatabase.instance.ref('ban/ban1/order'),
+        itemBuilder: ((context, snapshot, animation, index) {
+          return Container(
+            child: Text(snapshot.child('ten').value.toString()),
+          );
+        }));
   }
 }

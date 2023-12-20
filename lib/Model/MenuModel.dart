@@ -16,6 +16,10 @@ class MenuModel extends FlutterFlowModel<MenuWidget> {
   TextEditingController? txtSearchController;
   String? Function(BuildContext, String?)? txtSearchControllerValidator;
 
+  FocusNode? txtTenLoaiFocusNode;
+  TextEditingController? txtTenLoaiController;
+  String? Function(BuildContext, String?)? txtTenLoaiControllerValidator;
+
   /// Initialization and disposal methods.
 
   void initState(BuildContext context) {}

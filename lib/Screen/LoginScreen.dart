@@ -1,9 +1,11 @@
 import 'package:app_coffee_manage/firebase_options.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wifi_info_flutter/wifi_info_flutter.dart';
 
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -15,6 +17,9 @@ import 'package:provider/provider.dart';
 
 import '../Model/LoginModel.dart';
 export '../Model/LoginModel.dart';
+import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
 
 class LoginWidget extends StatefulWidget {
   const LoginWidget({Key? key}) : super(key: key);
@@ -25,9 +30,10 @@ class LoginWidget extends StatefulWidget {
 
 class _LoginWidgetState extends State<LoginWidget> {
   late LoginModel _model;
-
+  String ipAddress = 'Unknown';
   final scaffoldKey = GlobalKey<ScaffoldState>();
   late SharedPreferences logindata;
+  
   @override
   void initState() {
     super.initState();
@@ -65,71 +71,98 @@ class _LoginWidgetState extends State<LoginWidget> {
   }
 
   Future<void> main() async {
-    logindata = await SharedPreferences.getInstance();
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
-    try {
-      showDialog(
+    showDialog(
           context: context,
           builder: (context) {
             return Center(child: CircularProgressIndicator());
           });
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-              email: _model.txtUsernameController.text,
-              password: _model.txtPasswordController.text);
-      if (userCredential != null){
-        final user = userCredential.user;
-        if (user!.emailVerified == false){
-          Navigator.pop(context);
+    logindata = await SharedPreferences.getInstance();
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+    if (connectivityResult == ConnectivityResult.wifi) {
+      try {
+        final response = await http.get(Uri.parse('https://api64.ipify.org?format=json'));
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          setState(() {
+            ipAddress = data['ip'];
+            
+          });
+        } else {
+          print('Failed to get IP address. Status code: ${response.statusCode}');
+        }
+      } catch (e) {
+        print("Error getting WiFi IP address: $e");
+      }
+    } else {
+      print("Not connected to a WiFi network");
+    }
+    
+    if (ipAddress.toString() != "42.117.106.80"){
           Fluttertoast.showToast(
-          msg: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư đến.",
+          msg: "Bạn vui lòng sử dụng Internet của quán để đăng nhập.",
           toastLength: Toast.LENGTH_SHORT,
           timeInSecForIosWeb: 3,
           backgroundColor: Colors.red,
           textColor: Colors.white,
           fontSize: 16.0,
           );
-          user.sendEmailVerification();
-        }else{
-          DatabaseReference userRef = FirebaseDatabase.instance.reference().child('users/${user!.uid}');
-          userRef.child("roll").onValue.listen((event) {
-            logindata.setString('roll', event.snapshot.value.toString());
-          });
-          
-          Navigator.pushNamed(context, '/home');
+    }
+    else{
+      String? _username = _model.txtUsernameController.text.toString();
+      String? _password = _model.txtPasswordController.text.toString();
+      try{
+        UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+              email: _username,
+              password: _password);
+        if (userCredential != null){
+          final user = userCredential.user;
+          if (user!.emailVerified == false){
+            Navigator.pop(context);
+            Fluttertoast.showToast(
+            msg: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư đến.",
+            toastLength: Toast.LENGTH_SHORT,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            );
+            user.sendEmailVerification();
+          }else{
+            DatabaseReference userRef = FirebaseDatabase.instance.reference().child('users/${user!.uid}');
+            userRef.child("roll").onValue.listen((event) {
+              logindata.setString('roll', event.snapshot.value.toString());
+            });
+            Navigator.pushNamed(context, '/home');
+          }
         }
-      }
-    } on FirebaseAuthException catch (e) {
-      Navigator.pop(context);
+      }on FirebaseAuthException catch  (e) {
+        if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'Invalid email or password' || e.code == 'Invalid email or password.') {
+        Navigator.pop(context);
         Fluttertoast.showToast(
-          msg: "Mật khẩu sai hoặc tài khoản không tồn tại.",
-          toastLength: Toast.LENGTH_SHORT,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      if (e.code == "INVALID_LOGIN_CREDENTIALS") {
-        Navigator.of(context).pop();
+            msg: "Sai mật khẩu.",
+            toastLength: Toast.LENGTH_SHORT,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            );
+        
+      } else {
+         Navigator.pop(context);   
+
         Fluttertoast.showToast(
-          msg: "Mật khẩu sai",
-          toastLength: Toast.LENGTH_SHORT,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
+            msg: "An error occurred: ${e.code.toString()}",
+            toastLength: Toast.LENGTH_SHORT,
+            timeInSecForIosWeb: 3,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            );
       }
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: e.toString(),
-        toastLength: Toast.LENGTH_SHORT,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.blueGrey,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
+      }
     }
   }
 

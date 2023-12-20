@@ -1,3 +1,8 @@
+import 'package:app_coffee_manage/Screen/MainScreen.dart';
+import 'package:app_coffee_manage/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -28,6 +33,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
+  
+  
 
   @override
   void dispose() {
@@ -85,7 +92,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
               Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
                 child: Text(
-                  'Hỗ trơ bạn quản lý tốt hơn!',
+                  'Hỗ trợ bạn quản lý tốt hơn!',
                   style: FlutterFlowTheme.of(context).bodyMedium,
                 ),
               ),

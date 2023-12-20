@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Model/Order.dart';
@@ -26,15 +27,18 @@ class OrderWidget extends StatefulWidget {
 
 class _OrderWidgetState extends State<OrderWidget>
     with TickerProviderStateMixin {
+  User? user = FirebaseAuth.instance.currentUser;
   late OrderModel _model;
   List<Order> orders = [];
   final scaffoldKey = GlobalKey<ScaffoldState>();
   late SharedPreferences bandata;
+  late SharedPreferences logindata;
+  String? _roll;
 
-
-
+  
   @override
   void initState() {
+    load();
     super.initState();
     _model = createModel(context, () => OrderModel());
 
@@ -47,6 +51,10 @@ class _OrderWidgetState extends State<OrderWidget>
     
   }
 
+  void load() async{
+    logindata = await SharedPreferences.getInstance();
+    _roll = logindata.getString('roll');
+  }
   
 
   @override
@@ -75,6 +83,30 @@ class _OrderWidgetState extends State<OrderWidget>
         resizeToAvoidBottomInset: false,
         key: scaffoldKey,
         backgroundColor: Colors.white,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (_roll == "Chủ Quán") {
+                                Navigator.pushNamed(context, '/addTable');
+                              } else {
+                                Fluttertoast.showToast(
+                                  msg: "Bạn chưa được cấp quyền",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  timeInSecForIosWeb: 3,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 16.0,
+                                );
+                              }
+            
+          },
+          backgroundColor: FlutterFlowTheme.of(context).primary,
+          elevation: 8,
+          child: Icon(
+            Icons.add,
+            color: FlutterFlowTheme.of(context).info,
+            size: 24,
+          ),
+        ),
         appBar: AppBar(
           backgroundColor: Colors.white,
           iconTheme:
@@ -149,9 +181,10 @@ class _OrderWidgetState extends State<OrderWidget>
                                     itemBuilder:
                                         (BuildContext context, int index) {
                                       return InkWell(
-                                        onTap: (){
-                                          Navigator.pushNamed(context, '/hoadon');
-                                        },
+                                        onTap: () async {
+                                          bandata = await SharedPreferences.getInstance();
+                                          bandata.setString('tenban', orders[index].ten);
+                                          Navigator.pushNamed(context, '/hoadon');},
                                         child: Column(
                                         mainAxisSize: MainAxisSize.max,
                                         children: [
