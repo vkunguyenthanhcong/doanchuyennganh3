@@ -99,7 +99,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       print("Not connected to a WiFi network");
     }
     
-    if (ipAddress.toString() != "42.117.106.80"){
+    if (ipAddress.toString() != "14.191.113.188"){
           Fluttertoast.showToast(
           msg: "Bạn vui lòng sử dụng Internet của quán để đăng nhập.",
           toastLength: Toast.LENGTH_SHORT,

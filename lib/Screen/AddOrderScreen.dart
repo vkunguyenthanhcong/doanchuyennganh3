@@ -487,7 +487,7 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                   stream: FirebaseDatabase.instance
                                       .reference()
                                       .child("menu")
-                                      .onValue
+                                      .onValue 
                                       .asBroadcastStream(),
                                   builder: (BuildContext context,
                                       AsyncSnapshot snapshot) {
@@ -495,9 +495,15 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                         snapshot.data!.snapshot.value != null) {
                                       Map map = snapshot.data.snapshot.value;
                                       menus.clear();
-                                      map.forEach((dynamic, v) => menus.add(
+                                      map.forEach((dynamic, v) => 
+                                      {
+                                        if ((v["ten"].toString().toLowerCase()).contains(_model.txtFindController.text.toString().toLowerCase())){
+                                          menus.add(
                                           new Menu(v["ten"], v["gia"],
-                                              v["photoUrl"])));
+                                              v["photoUrl"]))
+                                        }
+                                      }
+                                      );
                                       return Expanded(
                                         child: SizedBox(
                                           height: 200.0,
