@@ -77,40 +77,9 @@ class _LoginWidgetState extends State<LoginWidget> {
             return Center(child: CircularProgressIndicator());
           });
     logindata = await SharedPreferences.getInstance();
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
-    if (connectivityResult == ConnectivityResult.wifi) {
-      try {
-        final response = await http.get(Uri.parse('https://api64.ipify.org?format=json'));
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> data = json.decode(response.body);
-          setState(() {
-            ipAddress = data['ip'];
-            
-          });
-        } else {
-          print('Failed to get IP address. Status code: ${response.statusCode}');
-        }
-      } catch (e) {
-        print("Error getting WiFi IP address: $e");
-      }
-    } else {
-      print("Not connected to a WiFi network");
-    }
-    
-    if (ipAddress.toString() != "14.191.113.188"){
-          Fluttertoast.showToast(
-          msg: "Bạn vui lòng sử dụng Internet của quán để đăng nhập.",
-          toastLength: Toast.LENGTH_SHORT,
-          timeInSecForIosWeb: 3,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          );
-    }
-    else{
-      String? _username = _model.txtUsernameController.text.toString();
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    String? _username = _model.txtUsernameController.text.toString();
       String? _password = _model.txtPasswordController.text.toString();
       try{
         UserCredential userCredential = await FirebaseAuth.instance
@@ -163,7 +132,94 @@ class _LoginWidgetState extends State<LoginWidget> {
             );
       }
       }
-    }
+    // var connectivityResult = await (Connectivity().checkConnectivity());
+    // WidgetsFlutterBinding.ensureInitialized();
+    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // if (connectivityResult == ConnectivityResult.wifi) {
+    //   try {
+    //     final response = await http.get(Uri.parse('https://api64.ipify.org?format=json'));
+    //     if (response.statusCode == 200) {
+    //       final Map<String, dynamic> data = json.decode(response.body);
+    //       setState(() {
+    //         ipAddress = data['ip'];
+            
+    //       });
+    //     } else {
+    //       print('Failed to get IP address. Status code: ${response.statusCode}');
+    //     }
+    //   } catch (e) {
+    //     print("Error getting WiFi IP address: $e");
+    //   }
+    // } else {
+    //   print("Not connected to a WiFi network");
+    // }
+    
+    // if (ipAddress.toString() != "59.153.233.16"){
+    //       Navigator.pop(context);
+    //       Fluttertoast.showToast(
+    //       msg: "Bạn vui lòng sử dụng Internet của quán để đăng nhập.",
+    //       toastLength: Toast.LENGTH_SHORT,
+    //       timeInSecForIosWeb: 3,
+    //       backgroundColor: Colors.red,
+    //       textColor: Colors.white,
+    //       fontSize: 16.0,
+    //       );
+    // }
+    // else{
+    //   String? _username = _model.txtUsernameController.text.toString();
+    //   String? _password = _model.txtPasswordController.text.toString();
+    //   try{
+    //     UserCredential userCredential = await FirebaseAuth.instance
+    //       .signInWithEmailAndPassword(
+    //           email: _username,
+    //           password: _password);
+    //     if (userCredential != null){
+    //       final user = userCredential.user;
+    //       if (user!.emailVerified == false){
+    //         Navigator.pop(context);
+    //         Fluttertoast.showToast(
+    //         msg: "Email chưa được xác minh. Vui lòng kiểm tra hộp thư đến.",
+    //         toastLength: Toast.LENGTH_SHORT,
+    //         timeInSecForIosWeb: 3,
+    //         backgroundColor: Colors.red,
+    //         textColor: Colors.white,
+    //         fontSize: 16.0,
+    //         );
+    //         user.sendEmailVerification();
+    //       }else{
+    //         DatabaseReference userRef = FirebaseDatabase.instance.reference().child('users/${user!.uid}');
+    //         userRef.child("roll").onValue.listen((event) {
+    //           logindata.setString('roll', event.snapshot.value.toString());
+    //         });
+    //         Navigator.pushNamed(context, '/home');
+    //       }
+    //     }
+    //   }on FirebaseAuthException catch  (e) {
+    //     if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'Invalid email or password' || e.code == 'Invalid email or password.') {
+    //     Navigator.pop(context);
+    //     Fluttertoast.showToast(
+    //         msg: "Sai mật khẩu.",
+    //         toastLength: Toast.LENGTH_SHORT,
+    //         timeInSecForIosWeb: 3,
+    //         backgroundColor: Colors.red,
+    //         textColor: Colors.white,
+    //         fontSize: 16.0,
+    //         );
+        
+    //   } else {
+    //      Navigator.pop(context);   
+
+    //     Fluttertoast.showToast(
+    //         msg: "An error occurred: ${e.code.toString()}",
+    //         toastLength: Toast.LENGTH_SHORT,
+    //         timeInSecForIosWeb: 3,
+    //         backgroundColor: Colors.red,
+    //         textColor: Colors.white,
+    //         fontSize: 16.0,
+    //         );
+    //   }
+    //   }
+    // }
   }
 
   @override

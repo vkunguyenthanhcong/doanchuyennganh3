@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app_coffee_manage/Model/HoaDon.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:http/http.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,10 +35,15 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
   late SharedPreferences bandata;
   String? _ban;
   StreamController<void> _banDataStream = StreamController<void>();
-  String? _tongTien;
+  int _tongTien = 0;
+  String? _maHoaDon;
+  String? _thuNgan;
+  String? _gioVao;
+  int sum = 0;
 
   @override
   void initState() {
+    
     super.initState();
     _model = createModel(context, () => HoaDonModel());
 
@@ -45,24 +51,51 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
     initial();
     loadBan();
   }
-
+  updateData(int gia, int sum) async {
+      DatabaseReference _ref = FirebaseDatabase.instance
+        .ref("ban/${removeDiacritics(_ban!.toLowerCase())}/");
+    await _ref.update({"tongtien": _tongTien - gia, "soluong" : sum - 1});
+  }
+  void noData() async{
+    FirebaseDatabase.instance
+        .ref('ban/${removeDiacritics(_ban!.toLowerCase())}/order')
+        .remove();
+    DatabaseReference _ref = FirebaseDatabase.instance
+        .ref("ban/${removeDiacritics(_ban!.toLowerCase())}/");
+    await _ref.update({"tongtien": 0, "soluong": 0, "trangthai": "Free", "giovao" : "No", "thungan" : "No", "mahoadon" : "No"});
+  }
+  
   void loadBan() async {
     bandata = await SharedPreferences.getInstance();
     _ban = bandata.getString("tenban").toString();
-    DatabaseReference userRef =
-        FirebaseDatabase.instance.reference().child('ban/${removeDiacritics(_ban.toString()).toLowerCase()}/');
-    userRef.child("tongtien").onValue.listen((event) {
-      _tongTien = event.snapshot.value.toString();      
+    try {
+      DatabaseReference HDRef = FirebaseDatabase.instance
+        .reference()
+        .child('ban/${removeDiacritics(_ban.toString()).toLowerCase()}/');
+    HDRef.child("tongtien").onValue.listen((event) {
+      _tongTien = int.parse(event.snapshot.value.toString());
+    });
+    HDRef.child("mahoadon").onValue.listen((event) {
+      _maHoaDon = event.snapshot.value.toString();
+    });
+    HDRef.child("thungan").onValue.listen((event) {
+      _thuNgan = event.snapshot.value.toString();
+    });
+    HDRef.child("giovao").onValue.listen((event) {
+      _gioVao = event.snapshot.value.toString();
     });
     _banDataStream.add(null);
+    }catch (e){
+      Navigator.pushNamed(context, '/order');
+    }
   }
-
   @override
   void dispose() {
     _model.dispose();
 
     super.dispose();
   }
+
   String removeDiacritics(String input) {
     return input
         .replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a')
@@ -78,8 +111,6 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
   void initial() async {
     User? user = FirebaseAuth.instance.currentUser;
     fullName = user!.displayName.toString();
-
-    
   }
 
   @override
@@ -96,7 +127,11 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
     return StreamBuilder(
       stream: _banDataStream.stream,
       builder: (context, snapshhot) {
-        if (_ban == "") {
+        if (_ban == "" ||
+            _tongTien == 0 ||
+            _maHoaDon == null ||
+            _thuNgan == null ||
+            _gioVao == null) {
           return Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
@@ -168,7 +203,7 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                                         ),
                                   ),
                                   Text(
-                                    '#ORDER',
+                                    _maHoaDon.toString(),
                                     style:
                                         FlutterFlowTheme.of(context).bodyMedium,
                                   ),
@@ -193,7 +228,66 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                                         ),
                                   ),
                                   Text(
-                                    fullName.toString(),
+                                    _thuNgan.toString(),
+                                    style:
+                                        FlutterFlowTheme.of(context).bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsetsDirectional.fromSTEB(20, 0, 20, 0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Text(
+                                    'Giờ vào : ',
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                  Text(
+                                    _gioVao.toString(),
+                                    style:
+                                        FlutterFlowTheme.of(context).bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Text(
+                                    'Giờ ra : ',
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                  Text(
+                                    0.toString(),
                                     style:
                                         FlutterFlowTheme.of(context).bodyMedium,
                                   ),
@@ -217,37 +311,71 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                                 return Text('Error: ${snapshot.error}');
                               } else if (!snapshot.hasData ||
                                   snapshot.data!.isEmpty) {
-                                return Text('No data available.');
+                                noData();
+                                return Text('Không có dữ liệu.');          
                               } else {
                                 List<DataRow> dataRows =
                                     snapshot.data!.map((data) {
+                                  sum = sum + 1;
                                   return DataRow(
                                     cells: [
                                       DataCell(Text(data.stt.toString())),
                                       DataCell(Text(data.mon.toString())),
                                       DataCell(Text(data.sl.toString())),
-                                      DataCell(Text(data.thanhTien.toString())),
+                                      DataCell(Text(formatNumber(int.parse(
+                                              data.thanhTien.toString()))
+                                          .toString())),
+                                      
+                                      DataCell(InkWell(
+                                        onTap: () {
+                                          FirebaseDatabase.instance
+                                              .ref(
+                                                  'ban/${removeDiacritics(_ban!.toLowerCase()).toString()}/order/${data.id.toString()}')
+                                              .remove();
+                                          updateData(int.parse(data.thanhTien.toString()), sum);
+                                          setState(() {
+                                            _tongTien = _tongTien - int.parse(data.thanhTien.toString());
+                                            if (_tongTien == 0){
+                                              Navigator.pop(context);
+                                              Navigator.pushNamed(context, '/order');
+                                              noData();
+                                             
+                                            }
+                                          });
+                                        },
+                                        child: Icon(
+                                          Icons.cancel_presentation_outlined,
+                                          size: 20,
+                                        ),
+                                      )),
                                     ],
                                   );
                                 }).toList();
 
                                 return DataTable2(
+                                  
+                                  columnSpacing: 0,
+                                  horizontalMargin: 10,
                                   columns: [
                                     DataColumn2(
-                                      label: Text('STT'),
-                                      size: ColumnSize.S,
-                                    ),
+                                        label: Text('#'),
+                                        size: ColumnSize.S,
+                                        fixedWidth: 20),
                                     DataColumn2(
-                                      label: Text('Món'),
-                                      size: ColumnSize.L,
-                                    ),
+                                        label: Text('Món'),
+                                        size: ColumnSize.L,
+                                        fixedWidth: 180),
                                     DataColumn2(
-                                      label: Text('SL'),
-                                      size: ColumnSize.M,
-                                    ),
+                                        label: Text('SL'),
+                                        size: ColumnSize.M,
+                                        fixedWidth: 40),
                                     DataColumn2(
                                       label: Text('Thành tiền'),
                                       size: ColumnSize.L,
+                                    ),
+                                    DataColumn2(
+                                      label: Text('Xoá'),
+                                      size: ColumnSize.S,
                                     ),
                                   ],
                                   rows: dataRows,
@@ -257,9 +385,9 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                             },
                           )),
                     ),
-                    
+
                     Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(20, 0, 20, 0),
+                      padding: EdgeInsetsDirectional.fromSTEB(20, 20, 20, 0),
                       child: Row(
                         mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -275,7 +403,9 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                                 ),
                           ),
                           Text(
-                            '40000 đ',
+                            formatNumber(int.parse(_tongTien.toString()))
+                                    .toString() +
+                                ' đ',
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .override(
@@ -294,7 +424,7 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text(
-                            'TPBANK : NGUYEN THANH CONG', 
+                            'TPBANK : NGUYEN THANH CONG',
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .override(
@@ -304,7 +434,10 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                                 ),
                           ),
                           QrImageView(
-                            data: '00020101021138640010A000000727013400069704260120MOMO23350M00425705150208QRIBFTTA53037045405'+'${_tongTien.toString()}'+'5802VN62190515MOMOW2W42570515630415D7',
+                            data:
+                                '00020101021138640010A000000727013400069704260120MOMO23350M00425705150208QRIBFTTA53037045405' +
+                                    '${_tongTien.toString()}' +
+                                    '5802VN62190515MOMOW2W42570515630415D7',
                             version: QrVersions.auto,
                             size: 200.0,
                           ),
@@ -312,60 +445,65 @@ class _HoaDonWidgetState extends State<HoaDonWidget> {
                       ),
                     ),
                     // Generated code for this Row Widget...
-Padding(
-  padding: EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
-  child: Row(
-    mainAxisSize: MainAxisSize.max,
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      FFButtonWidget(
-        onPressed: () {
-          print('Button pressed ...');
-        },
-        text: 'In Hoá Đơn',
-        options: FFButtonOptions(
-          height: 40,
-          padding: EdgeInsetsDirectional.fromSTEB(24, 0, 24, 0),
-          iconPadding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-          color: FlutterFlowTheme.of(context).primary,
-          textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                fontFamily: 'Readex Pro',
-                color: Colors.white,
-              ),
-          elevation: 3,
-          borderSide: BorderSide(
-            color: Colors.transparent,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      FFButtonWidget(
-        onPressed: () {
-          
-        },
-        text: 'Thanh Toán',
-        options: FFButtonOptions(
-          height: 40,
-          padding: EdgeInsetsDirectional.fromSTEB(24, 0, 24, 0),
-          iconPadding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-          color: FlutterFlowTheme.of(context).primary,
-          textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                fontFamily: 'Readex Pro',
-                color: Colors.white,
-              ),
-          elevation: 3,
-          borderSide: BorderSide(
-            color: Colors.transparent,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    ],
-  ),
-)
-
+                    Padding(
+                      padding: EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          FFButtonWidget(
+                            onPressed: () {
+                              print('Button pressed ...');
+                            },
+                            text: 'In Hoá Đơn',
+                            options: FFButtonOptions(
+                              height: 40,
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(24, 0, 24, 0),
+                              iconPadding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                              color: FlutterFlowTheme.of(context).primary,
+                              textStyle: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                  .override(
+                                    fontFamily: 'Readex Pro',
+                                    color: Colors.white,
+                                  ),
+                              elevation: 3,
+                              borderSide: BorderSide(
+                                color: Colors.transparent,
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          FFButtonWidget(
+                            onPressed: () {},
+                            text: 'Thanh Toán',
+                            options: FFButtonOptions(
+                              height: 40,
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(24, 0, 24, 0),
+                              iconPadding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                              color: FlutterFlowTheme.of(context).primary,
+                              textStyle: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                  .override(
+                                    fontFamily: 'Readex Pro',
+                                    color: Colors.white,
+                                  ),
+                              elevation: 3,
+                              borderSide: BorderSide(
+                                color: Colors.transparent,
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -374,5 +512,10 @@ Padding(
         }
       },
     );
+  }
+
+  String formatNumber(int number) {
+    final formatter = NumberFormat('#,###');
+    return formatter.format(number);
   }
 }

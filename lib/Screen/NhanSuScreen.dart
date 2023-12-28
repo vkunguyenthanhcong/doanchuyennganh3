@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -21,7 +22,7 @@ class NhanSuWidget extends StatefulWidget {
 
 class _NhanSuWidgetState extends State<NhanSuWidget> {
   late NhanSuModel _model;
-
+  late SharedPreferences logindata;
   final ref = FirebaseDatabase.instance.ref('users/');
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -139,7 +140,9 @@ class _NhanSuWidgetState extends State<NhanSuWidget> {
                       defaultChild: Text('Loading...'),
                       itemBuilder: (context, snapshot, animation, index) {
                         return InkWell(
-                          onTap: (){
+                          onTap: () async {
+                            logindata = await SharedPreferences.getInstance();
+                            logindata.setString("id",snapshot.child('uid').value.toString());
                             Navigator.pushNamed(context, '/nhansudetail');
                           },
                           child: Card(

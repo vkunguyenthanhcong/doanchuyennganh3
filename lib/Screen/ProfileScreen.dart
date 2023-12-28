@@ -42,11 +42,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
   String phone = "";
   String gioiTinh = "";
   String ca = "";
+  String chucvu = "";
   StreamController<void> _userDataController = StreamController<void>();
   User? user = FirebaseAuth.instance.currentUser;
   @override
   void initState() {
-    
     super.initState();
     _model = createModel(context, () => ProfileModel());
 
@@ -55,26 +55,31 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
     _model.txtSoDienThoaiController ??= TextEditingController();
     _model.txtSoDienThoaiFocusNode ??= FocusNode();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
-    
+
     setState(() {
       main();
     });
   }
+
   _updateImgWidget() async {
     setState(() {
       _pic = CircularProgressIndicator();
     });
-    Uint8List bytes = (await NetworkAssetBundle(Uri.parse(photolink)).load(photolink))
-        .buffer
-        .asUint8List();
+    Uint8List bytes =
+        (await NetworkAssetBundle(Uri.parse(photolink)).load(photolink))
+            .buffer
+            .asUint8List();
     setState(() {
       _pic = Image.memory(bytes);
     });
-    await FirebaseDatabase.instance.ref("users/${user?.uid}/").update({'photoUrl' : photolink.toString()});
+    await FirebaseDatabase.instance
+        .ref("users/${user?.uid}/")
+        .update({'photoUrl': photolink.toString()});
     user?.updatePhotoURL(photolink.toString());
   }
+
   @override
   void dispose() {
     _model.dispose();
@@ -89,7 +94,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     userRef.child("fullname").onValue.listen((event) {
       fullname = event.snapshot.value.toString();
       _model.txtHotenController.text = event.snapshot.value.toString();
-      
     });
     userRef.child("email").onValue.listen((event) {
       email = event.snapshot.value.toString();
@@ -104,11 +108,13 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     userRef.child("calamviec").onValue.listen((event) {
       ca = event.snapshot.value.toString();
     });
+    userRef.child("roll").onValue.listen((event) {
+      chucvu = event.snapshot.value.toString();
+    });
     userRef.child("sex").onValue.listen((event) {
       gioiTinh = event.snapshot.value.toString();
       _userDataController.add(null);
     });
-    
   }
 
   void updateInformation() async {
@@ -125,48 +131,58 @@ class _ProfileWidgetState extends State<ProfileWidget> {
         fontSize: 16.0,
       );
     } else {
-        FocusManager.instance.primaryFocus?.unfocus();
-        
-        await FirebaseDatabase.instance.ref("users/${user?.uid}/").update({'fullname' : _model.txtHotenController.text.toString(), 'phoneNumber' : _model.txtSoDienThoaiController.text.toString(), 'sex' : _model.rdSexValue.toString()});
+      FocusManager.instance.primaryFocus?.unfocus();
 
-        user?.updateDisplayName(_model.txtHotenController.text.toString());
-        Fluttertoast.showToast(
-          msg: "Cập nhật thành công",
-          toastLength: Toast.LENGTH_SHORT,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      
+      await FirebaseDatabase.instance.ref("users/${user?.uid}/").update({
+        'fullname': _model.txtHotenController.text.toString(),
+        'phoneNumber': _model.txtSoDienThoaiController.text.toString(),
+        'sex': _model.rdSexValue.toString()
+      });
+
+      user?.updateDisplayName(_model.txtHotenController.text.toString());
+      Fluttertoast.showToast(
+        msg: "Cập nhật thành công",
+        toastLength: Toast.LENGTH_SHORT,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
     }
   }
-  Future<void> pickImage() async {
-  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-  if (pickedFile != null) {
-    // Use the picked image file
-    uploadImageToFirebase(pickedFile.path);
-  }
-  }
-  Future<void> uploadImageToFirebase(String filePath) async {
-  File file = File(filePath);
-  String fileName = user!.uid; // Use a unique name for the file
 
-  try {
-    firebase_storage.SettableMetadata metadata = firebase_storage.SettableMetadata(
-      contentType: 'image/jpeg', // e.g., 'image/jpeg'
-    );
-    final snapshot = await firebase_storage.FirebaseStorage.instance
-        .ref('images/${fileName}')
-        .putFile(file, metadata);
-    
-    photolink = await firebase_storage.FirebaseStorage.instance.ref('images/${fileName}').getDownloadURL();
-    print('Image uploaded to Firebase Storage');
-    _updateImgWidget();
-  } on firebase_storage.FirebaseException catch (e) {
-    print('Error uploading image to Firebase Storage: $e');
+  Future<void> pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Use the picked image file
+      uploadImageToFirebase(pickedFile.path);
+    }
   }
+
+  Future<void> uploadImageToFirebase(String filePath) async {
+    File file = File(filePath);
+    String fileName = user!.uid; // Use a unique name for the file
+
+    try {
+      firebase_storage.SettableMetadata metadata =
+          firebase_storage.SettableMetadata(
+        contentType: 'image/jpeg', // e.g., 'image/jpeg'
+      );
+      final snapshot = await firebase_storage.FirebaseStorage.instance
+          .ref('images/${fileName}')
+          .putFile(file, metadata);
+
+      photolink = await firebase_storage.FirebaseStorage.instance
+          .ref('images/${fileName}')
+          .getDownloadURL();
+      print('Image uploaded to Firebase Storage');
+      _updateImgWidget();
+    } on firebase_storage.FirebaseException catch (e) {
+      print('Error uploading image to Firebase Storage: $e');
+    }
   }
+
   @override
   Widget build(BuildContext context) {
     if (isiOS) {
@@ -240,12 +256,12 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                                     shape: BoxShape.circle,
                                   ),
                                   child: _pic = photolink != null
-                                        ? Image.network(
-                                            photolink.toString(),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Image.asset('images/camera.png'),
-                                          ),
+                                      ? Image.network(
+                                          photolink.toString(),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.asset('images/camera.png'),
+                                ),
                               ),
                               Align(
                                 alignment: AlignmentDirectional(1.00, 1.00),
@@ -426,36 +442,69 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                               ),
                             ),
                             Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Padding(
                               padding:
-                                  EdgeInsetsDirectional.fromSTEB(20, 0, 0, 0),
-                              child: Text(
-                                'Ca làm việc : ',
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyMedium
-                                    .override(
-                                      fontFamily: 'Readex Pro',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                  EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        20, 0, 0, 0),
+                                    child: Text(
+                                      'Ca làm việc : ',
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .override(
+                                            fontFamily: 'Readex Pro',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
+                                  ),
+                                  Text(
+                                    ca.toString(),
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontSize: 16,
+                                        ),
+                                  ),
+                                ],
                               ),
                             ),
-                            Text(
-                              ca.toString(),
-                              style: FlutterFlowTheme.of(context)
-                                  .bodyMedium
-                                  .override(
-                                    fontFamily: 'Readex Pro',
-                                    fontSize: 16,
+                            Padding(
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        20, 0, 0, 0),
+                                    child: Text(
+                                      'Chức vụ : ',
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .override(
+                                            fontFamily: 'Readex Pro',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
                                   ),
+                                  Text(
+                                    chucvu.toString(),
+                                    style: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .override(
+                                          fontFamily: 'Readex Pro',
+                                          fontSize: 16,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
                             Padding(
                               padding:
                                   EdgeInsetsDirectional.fromSTEB(20, 30, 20, 0),
@@ -501,7 +550,6 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                     _currentIndex = index;
                     navigateToSelectedPage(context, index);
                   });
-                  
                 },
               ),
             ),

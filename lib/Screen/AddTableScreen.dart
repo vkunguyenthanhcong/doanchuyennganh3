@@ -107,9 +107,12 @@ class _AddBanWidgetState extends State<AddBanWidget> {
           "id": "ban" +
               removeDiacritics(_model.textController.text.toString())
                   .toLowerCase(),
+          "thungan" : "No",
+          "mahoadon" : "No",
+          "giovao" : "No",
           "trangthai": "Free",
           "soluong": 0,
-          "tongtien": 0,
+          "tongtien": 0          
         });
         Fluttertoast.showToast(
             msg: 'Thêm thành công',
@@ -120,6 +123,7 @@ class _AddBanWidgetState extends State<AddBanWidget> {
             textColor: Colors.white,
             fontSize: 16.0);
       }
+      _model.textController.text = "";
     }
   }
 
@@ -225,6 +229,7 @@ class _AddBanWidgetState extends State<AddBanWidget> {
                   child: FFButtonWidget(
                     onPressed: () {
                       addData();
+                      
                     },
                     text: 'Thêm',
                     options: FFButtonOptions(

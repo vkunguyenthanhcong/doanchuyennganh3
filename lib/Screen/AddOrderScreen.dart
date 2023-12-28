@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'dart:ui';
 import 'package:app_coffee_manage/Model/Menu.dart';
 import 'package:app_coffee_manage/Model/Order.dart';
@@ -42,6 +41,11 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
   String find = "";
   String _tongTien = "";
   String _soLuong = "";
+  String? _fullName;
+  String? _thuNgan;
+  String? _maHoaDon;
+  String? _gioVao;
+  User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -63,11 +67,31 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
   }
 
   final auth = FirebaseAuth.instance;
-  final _refs = FirebaseDatabase.instance.ref('thongtinquan/loai');
+  final Billref = FirebaseDatabase.instance.ref();
+  void checkBill() async {
+    DateTime now = DateTime.now();
+    final snapshot =
+        await Billref.child('ban/${removeDiacritics(_ban.toLowerCase())}/')
+            .get();
+    _thuNgan = snapshot.child('thungan').value.toString();
+    _maHoaDon = snapshot.child('mahoadon').value.toString();
+    _gioVao = snapshot.child('giovao').value.toString();
+    if (_thuNgan == "No" && _maHoaDon == "No" && _gioVao == "No") {
+      Billref.child('ban/${removeDiacritics(_ban.toLowerCase())}/').update({
+        "thungan": user!.displayName.toString(),
+        "mahoadon": removeDiacritics(_ban.toLowerCase()) +
+            DateFormat('yyyyMMddHHmm').format(now),
+        "giovao": DateFormat('HH:mm').format(now)
+      });
+    }
+  }
 
   void addMenu(String id, int gia, String ten) async {
+    checkBill();
+    _fullName = user!.displayName.toString();
     DateTime now = DateTime.now();
     String formattedDateTime = DateFormat('yyyy-MM-dd-HH:mm:ssss').format(now);
+
     DatabaseReference ref = FirebaseDatabase.instance.ref(
         "ban/${removeDiacritics(_ban.toLowerCase())}/order/${id + formattedDateTime}/");
     await ref.set({
@@ -84,6 +108,19 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
       "trangthai": "Busy"
     });
   }
+
+  void deleteBill() async {
+    Navigator.pushNamed(context, '/order');
+    FirebaseDatabase.instance
+        .ref('ban/${removeDiacritics(_ban.toLowerCase())}/order')
+        .remove();
+    DatabaseReference _ref = FirebaseDatabase.instance
+        .ref("ban/${removeDiacritics(_ban.toLowerCase())}/");
+    await _ref.update({"tongtien": 0, "soluong": 0, "trangthai": "Free", "giovao" : "No", "thungan" : "No", "mahoadon" : "No"});
+    _tongTien = "0";
+    _soLuong = "0";
+  }
+
   String removeDiacritics(String input) {
     return input
         .replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a')
@@ -112,7 +149,7 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
         ),
       );
     }
-    
+
     return StreamBuilder(
         stream: _userDataController.stream,
         builder: (context, snapshot) {
@@ -254,27 +291,12 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                             context: context,
                                             builder: (BuildContext context) {
                                               return CustomConfirmDialog(
-                                                  title: "Xoá",
+                                                  title: "Xoá hoá đơn",
                                                   content:
                                                       "Bạn có chắc chắn muốn xoá dữ liệu này?",
-                                                  onConfirm: () async {
+                                                  onConfirm: () {
                                                     Navigator.pop(context);
-                                                    FirebaseDatabase.instance
-                                                        .ref(
-                                                            'ban/${removeDiacritics(_ban.toLowerCase())}/order')
-                                                        .remove();
-                                                    DatabaseReference _ref =
-                                                        FirebaseDatabase
-                                                            .instance
-                                                            .ref(
-                                                                "ban/${removeDiacritics(_ban.toLowerCase())}/");
-                                                    await _ref.update({
-                                                      "tongtien": 0,
-                                                      "soluong": 0,
-                                                      "trangthai": "Free"
-                                                    });
-                                                    _tongTien = "0";
-                                                    _soLuong = "0";
+                                                    deleteBill();
                                                   },
                                                   onCancel: () {
                                                     Navigator.pop(context);
@@ -487,7 +509,7 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                   stream: FirebaseDatabase.instance
                                       .reference()
                                       .child("menu")
-                                      .onValue 
+                                      .onValue
                                       .asBroadcastStream(),
                                   builder: (BuildContext context,
                                       AsyncSnapshot snapshot) {
@@ -495,15 +517,19 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                         snapshot.data!.snapshot.value != null) {
                                       Map map = snapshot.data.snapshot.value;
                                       menus.clear();
-                                      map.forEach((dynamic, v) => 
-                                      {
-                                        if ((v["ten"].toString().toLowerCase()).contains(_model.txtFindController.text.toString().toLowerCase())){
-                                          menus.add(
-                                          new Menu(v["ten"], v["gia"],
-                                              v["photoUrl"]))
-                                        }
-                                      }
-                                      );
+                                      map.forEach((dynamic, v) => {
+                                            if ((v["ten"]
+                                                    .toString()
+                                                    .toLowerCase())
+                                                .contains(_model
+                                                    .txtFindController.text
+                                                    .toString()
+                                                    .toLowerCase()))
+                                              {
+                                                menus.add(new Menu(v["ten"],
+                                                    v["gia"], v["photoUrl"]))
+                                              }
+                                          });
                                       return Expanded(
                                         child: SizedBox(
                                           height: 200.0,
@@ -516,7 +542,6 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                               crossAxisCount: 5,
                                               crossAxisSpacing: 1.0,
                                               mainAxisSpacing: 1.0,
-                                            
                                             ),
                                             itemCount: menus.length,
                                             itemBuilder: (BuildContext context,
@@ -547,8 +572,8 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                       children: [
                                                         Expanded(
                                                           child: Container(
-                                                              width: 100,
-                                                              height: 100,
+                                                              width: 300,
+                                                              height: 50,
                                                               decoration:
                                                                   BoxDecoration(
                                                                 color: FlutterFlowTheme.of(
@@ -639,7 +664,6 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                   .contains(_model
                                                       .txtFindController.text
                                                       .toLowerCase())) {
-                                                
                                                 return InkWell(
                                                     onTap: () {
                                                       addMenu(
@@ -753,9 +777,7 @@ class _AddOrderWidgetState extends State<AddOrderWidget> {
                                                   visible: false,
                                                   child: SizedBox(
                                                     height: 500.0,
-
                                                   ),
-
                                                 );
                                               }
                                             },

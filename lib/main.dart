@@ -18,6 +18,8 @@ import 'package:app_coffee_manage/Screen/SplashScreen.dart';
 import 'package:app_coffee_manage/Screen/ThongTinQuanScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:responsive_framework/breakpoint.dart';
+import 'package:responsive_framework/responsive_breakpoints.dart';
 Future<void> main() async {
   runApp(MyApp());
 }
@@ -25,8 +27,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      builder: (context, child) => ResponsiveBreakpoints(child: child!, breakpoints: [
+          const Breakpoint(start: 0, end: 450, name: MOBILE),
+          const Breakpoint(start: 451, end: 800, name: TABLET),
+          const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+          const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+        ],),
       debugShowCheckedModeBanner: false,
-      title: "Coffee App ManageS",
+      title: "Coffee App Manage",
       theme: ThemeData(
       ),
       routes: <String, WidgetBuilder>{

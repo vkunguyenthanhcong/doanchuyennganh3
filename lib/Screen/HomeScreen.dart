@@ -64,19 +64,20 @@ class _HomePageWidgetState extends State<HomePageWidget> {
         body: SafeArea(
           top: true,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.max,
             children: [
               Align(
-                alignment: AlignmentDirectional(0.00, -1.00),
+                alignment: AlignmentDirectional(0, -1),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
                     Theme.of(context).brightness == Brightness.dark
                         ? 'images/logo.png'
                         : 'images/logo1.png',
-                    width: double.infinity,
-                    height: 500,
-                    fit: BoxFit.cover,
+                    width: MediaQuery.sizeOf(context).width,
+                    height: MediaQuery.sizeOf(context).height * 0.5,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
